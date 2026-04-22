@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser-Side Inventory</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Local Shop Manager</h1>
+        <div class="filters">
+            <label>Filter View: </label>
+            <select id="stockFilter" onchange="renderItems()">
+                <option value="all">Show All</option>
+                <option value="in">In Stock Only</option>
+                <option value="out">Out of Stock</option>
+            </select>
+        </div>
+    </header>
+
+    <main id="inventory-grid">
+        </main>
+
+    <script>
+        // Initial Data - Stored in Browser after first load
+        const initialProducts = [
+            { id: 1, name: "Mechanical Keyboard", status: "in", price: 89, stock: 15 },
+            { id: 2, name: "Wireless Mouse", status: "in", price: 45, stock: 10 },
+            { id: 3, name: "USB-C Cable", status: "out", price: 15, stock: 0 },
+            { id: 4, name: "Gaming Monitor", status: "in", price: 299, stock: 5 },
+            { id: 5, name: "Webcam", status: "out", price: 60, stock: 0 }
+        ];
+
+        // Load data from localStorage or use initial data
+        let products = JSON.parse(localStorage.getItem('myInventory')) || initialProducts;
+
+        function renderItems() {
+            const grid = document.getElementById('inventory-grid');
+            const filter = document.getElementById('stockFilter').value;
+            grid.innerHTML = '';
+
+            products.forEach((product, index) => {
+                // Filter Logic
+                if (filter !== 'all' && product.status !== filter) return;
+
+                const card = document.createElement('div');
+                card.className = `card ${product.status === 'out' ? 'oos' : ''}`;
+                
+                card.innerHTML = `
+                    <h3>${product.name}</h3>
+                    <p class="status-tag">${product.status === 'in' ? '● In Stock' : '○ Out of Stock'}</p>
+                    <p>Price: $${product.price}</p>
+                    <div class="controls">
+                        <label>Qty:</label>
+                        <input type="number" 
+                               value="${product.stock}" 
+                               min="0" 
+                               ${product.status === 'out' ? 'disabled' : ''} 
+                               onchange="updateQuantity(${index}, this.value)">
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function updateQuantity(index, newVal) {
+            products[index].stock = parseInt(newVal);
+            // Logic: If user sets qty to 0, mark as out of stock
+            products[index].status = products[index].stock > 0 ? 'in' : 'out';
+            
+            // Save to browser storage
+            localStorage.setItem('myInventory', JSON.stringify(products));
+            renderItems(); // Refresh view
+        }
+
+        // Initial Load
+        renderItems();
+    </script>
+</body>
+</html>
