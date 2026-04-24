@@ -183,6 +183,10 @@
             const mfr = document.getElementById('mfrIn').value;
             const type = document.getElementById('typeIn').value;
             const sub = document.getElementById('subtypeIn').value;
+
+            // Log the values to the console for debugging
+            console.log("Validation Check:", { mfr, type, sub });
+            
             document.getElementById('saveBtn').disabled = !(mfr && type && sub);
         }
 
