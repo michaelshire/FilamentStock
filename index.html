@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Filament Inventory</title>
+    <title>3D Filament Inventory Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,10 +19,9 @@
         </div>
     </header>
 
-    <main id="inventory-grid">
-        </main>
+    <main id="inventory-grid"></main>
 
-    <button class="fab" onclick="openModal()" title="Add New Item">+</button>
+    <button class="fab" onclick="openModal()">+</button>
 
     <div id="modal-overlay">
         <div class="modal">
@@ -30,29 +29,22 @@
             
             <div class="form-group">
                 <label>Manufacturer</label>
-                <select id="mfrIn">
-                    <option value="Anker">Anker</option>
-                    <option value="Anycubic">Anycubic</option>
-                    <option value="Bambu Labs">Bambu Labs</option>
-                    <option value="Creality">Creality</option>
-                    <option value="Elegoo">Elegoo</option>
-                    <option value="Geeetech">Geeetech</option>
-                    <option value="Prusa">Prusa</option>
-                    <option value="Qidi">Qidi</option>
-                    <option value="Tronxy">Tronxy</option>
-                    <option value="Vivedino">Vivedino</option>
-                    <option value="Voron">Voron</option>
-                    <option value="Voxelab">Voxelab</option>
+                <select id="mfrIn" onchange="updateTypeDropdown()">
+                    <option value="">Select Brand...</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label>Type</label>
-                <select id="typeIn">
-                    <option value="PLA">PLA</option>
-                    <option value="ABS">ABS</option>
-                    <option value="PETG">PETG</option>
-                    <option value="PETG-Translucent">PETG-Translucent</option>
+                <select id="typeIn" onchange="updateSubtypeDropdown()" disabled>
+                    <option value="">Select Type...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Sub-Type</label>
+                <select id="subtypeIn" disabled>
+                    <option value="">Select Sub-type...</option>
                 </select>
             </div>
 
@@ -66,20 +58,96 @@
 
             <div class="modal-btns">
                 <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-add" onclick="saveItem()">Add to Stock</button>
+                <button class="btn btn-add" id="saveBtn" onclick="saveItem()" disabled>Add to Stock</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Use a unique key for storage to avoid conflicts
-        const STORAGE_KEY = 'filament_inventory_v2';
+        // DATA STRUCTURE: The "Source of Truth" for your brands
+        const catalog = {
+            "Bambu Labs": {
+                "PLA": ["Basic", "Matte", "Silk", "Marble", "Sparkle", "CF (Carbon Fiber)"],
+                "PETG": ["Basic", "CF", "HF (High Flow)"],
+                "ABS": ["Basic"],
+                "ASA": ["Basic"],
+                "TPU": ["95A", "HF"],
+                "Support": ["Support for PLA", "Support for PA/PET", "Support G"],
+                "Fibre Reinforced": ["PAHT-CF", "PET-CF", "PLA-CF"]
+            },
+            "Prusa": {
+                "PLA": ["Prusament PLA", "Recycled"],
+                "PETG": ["Prusament PETG", "V0 (Self-extinguishing)"],
+                "ASA": ["Prusament ASA"]
+            },
+            "Creality": {
+                "PLA": ["Ender Series", "Hyper PLA", "Silk"],
+                "PETG": ["CR-PETG"]
+            }
+            // You can easily add more brands here following the same pattern
+        };
+
+        const STORAGE_KEY = 'filament_inventory_v3';
         let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-        // Update hex text in modal live
-        document.getElementById('colorIn').addEventListener('input', (e) => {
-            document.getElementById('colorHexDisplay').innerText = e.target.value.toUpperCase();
-        });
+        // --- Dropdown Logic ---
+
+        function initMfrDropdown() {
+            const mfrSelect = document.getElementById('mfrIn');
+            Object.keys(catalog).forEach(brand => {
+                const opt = new Option(brand, brand);
+                mfrSelect.add(opt);
+            });
+        }
+
+        function updateTypeDropdown() {
+            const mfr = document.getElementById('mfrIn').value;
+            const typeSelect = document.getElementById('typeIn');
+            const subtypeSelect = document.getElementById('subtypeIn');
+            
+            typeSelect.innerHTML = '<option value="">Select Type...</option>';
+            subtypeSelect.innerHTML = '<option value="">Select Sub-type...</option>';
+            subtypeSelect.disabled = true;
+
+            if (mfr && catalog[mfr]) {
+                typeSelect.disabled = false;
+                Object.keys(catalog[mfr]).forEach(type => {
+                    typeSelect.add(new Option(type, type));
+                });
+            } else {
+                typeSelect.disabled = true;
+            }
+            checkValidation();
+        }
+
+        function updateSubtypeDropdown() {
+            const mfr = document.getElementById('mfrIn').value;
+            const type = document.getElementById('typeIn').value;
+            const subtypeSelect = document.getElementById('subtypeIn');
+
+            subtypeSelect.innerHTML = '<option value="">Select Sub-type...</option>';
+
+            if (type && catalog[mfr][type]) {
+                subtypeSelect.disabled = false;
+                catalog[mfr][type].forEach(sub => {
+                    subtypeSelect.add(new Option(sub, sub));
+                });
+            } else {
+                subtypeSelect.disabled = true;
+            }
+            checkValidation();
+        }
+
+        function checkValidation() {
+            const mfr = document.getElementById('mfrIn').value;
+            const type = document.getElementById('typeIn').value;
+            const sub = document.getElementById('subtypeIn').value;
+            document.getElementById('saveBtn').disabled = !(mfr && type && sub);
+        }
+
+        document.getElementById('subtypeIn').addEventListener('change', checkValidation);
+
+        // --- Core Functionality ---
 
         function renderItems() {
             const grid = document.getElementById('inventory-grid');
@@ -93,7 +161,7 @@
             });
 
             if (filteredList.length === 0) {
-                grid.innerHTML = '<div class="empty-state">Your inventory is empty. Click + to add filament!</div>';
+                grid.innerHTML = '<div class="empty-state">No filaments found. Click + to add some!</div>';
                 return;
             }
 
@@ -103,19 +171,17 @@
                 card.className = `card ${item.qty === 0 ? 'oos' : ''}`;
                 
                 card.innerHTML = `
-                    <button class="delete-btn" onclick="deleteItem(${realIdx})" title="Remove Item">&times;</button>
-                    
+                    <button class="delete-btn" onclick="deleteItem(${realIdx})">&times;</button>
                     <div class="card-header">
                         <div class="card-title-area">
                             <h3>${item.mfr}</h3>
-                            <p class="type-tag">${item.type}</p>
+                            <p class="type-tag">${item.type} - ${item.subtype}</p>
                             <span class="hex-badge">${item.color.toUpperCase()}</span>
                         </div>
                         <div class="color-swatch" style="background-color: ${item.color};"></div>
                     </div>
-                    
                     <div class="controls">
-                        <label>Inventory Qty:</label>
+                        <label>Qty:</label>
                         <input type="number" value="${item.qty}" min="0" onchange="updateQty(${realIdx}, this.value)">
                     </div>
                 `;
@@ -126,16 +192,16 @@
         function saveItem() {
             const mfr = document.getElementById('mfrIn').value;
             const type = document.getElementById('typeIn').value;
+            const subtype = document.getElementById('subtypeIn').value;
             const color = document.getElementById('colorIn').value;
 
-            inventory.push({ mfr, type, color, qty: 1 });
+            inventory.push({ mfr, type, subtype, color, qty: 1 });
             sync();
             closeModal();
         }
 
         function deleteItem(idx) {
-            const item = inventory[idx];
-            if (confirm(`Remove ${item.mfr} ${item.type} (${item.color}) from your inventory?`)) {
+            if (confirm("Remove this filament?")) {
                 inventory.splice(idx, 1);
                 sync();
             }
@@ -154,7 +220,12 @@
         function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-        // Initialize on page load
+        // Live Color Sync
+        document.getElementById('colorIn').addEventListener('input', (e) => {
+            document.getElementById('colorHexDisplay').innerText = e.target.value.toUpperCase();
+        });
+
+        initMfrDropdown();
         renderItems();
     </script>
 </body>
