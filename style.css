@@ -7,12 +7,11 @@
 }
 
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Segoe UI', system-ui, sans-serif;
     background-color: var(--bg);
     color: var(--text);
     margin: 0;
     padding: 20px;
-    line-height: 1.5;
 }
 
 header {
@@ -33,10 +32,10 @@ select#stockFilter {
     border-radius: 8px;
     border: 1px solid var(--border);
     background: white;
-    font-weight: 500;
+    cursor: pointer;
 }
 
-/* Grid Layout */
+/* Grid */
 #inventory-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -45,18 +44,35 @@ select#stockFilter {
     margin: 0 auto;
 }
 
-/* Tile Design */
+/* Tiles */
 .card {
     background: var(--card-bg);
     border-radius: 16px;
     padding: 24px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s;
     border-top: 6px solid #22c55e;
+    position: relative;
 }
 
 .card.oos { border-top-color: #ef4444; opacity: 0.8; }
-.card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+.card:hover { transform: translateY(-4px); }
+
+.delete-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #cbd5e1;
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.delete-btn:hover { color: #ef4444; transform: scale(1.2); }
 
 .card-header {
     display: flex;
@@ -65,8 +81,10 @@ select#stockFilter {
     margin-bottom: 20px;
 }
 
+.card-title-area { padding-right: 25px; }
 .card-title-area h3 { margin: 0; font-size: 1.25rem; }
-.type-tag { margin: 4px 0; font-weight: 600; color: #64748b; }
+
+.type-tag { margin: 4px 0; font-weight: 700; color: #64748b; }
 
 .hex-badge {
     display: inline-block;
@@ -103,7 +121,7 @@ select#stockFilter {
     font-weight: bold;
 }
 
-/* Floating Button */
+/* FAB */
 .fab {
     position: fixed;
     bottom: 40px;
@@ -152,21 +170,8 @@ select#stockFilter {
     box-sizing: border-box;
 }
 
-.color-picker-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-input[type="color"] {
-    width: 60px;
-    height: 60px;
-    padding: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-}
-
+.color-picker-container { display: flex; align-items: center; gap: 15px; }
+input[type="color"] { width: 60px; height: 60px; border: none; background: none; cursor: pointer; }
 #colorHexDisplay { font-family: monospace; font-weight: bold; color: var(--primary); }
 
 .modal-btns { display: flex; gap: 12px; margin-top: 10px; }
