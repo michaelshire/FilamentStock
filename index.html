@@ -43,29 +43,33 @@
 
     <main id="inventory-grid"></main>
 
-    <button class="fab" onclick="openModal()">+</button>
+    <button class="fab" onclick="openModal()" title="Add New Item">+</button>
 
     <div id="modal-overlay">
         <div class="modal">
             <h2>Add New Filament</h2>
+            
             <div class="form-group">
                 <label>Manufacturer</label>
                 <select id="mfrIn" onchange="updateTypeDropdown()">
                     <option value="">Select Brand...</option>
                 </select>
             </div>
+
             <div class="form-group">
                 <label>Type</label>
                 <select id="typeIn" onchange="updateSubtypeDropdown()" disabled>
                     <option value="">Select Type...</option>
                 </select>
             </div>
+
             <div class="form-group">
                 <label>Sub-Type</label>
                 <select id="subtypeIn" onchange="checkValidation()" disabled>
                     <option value="">Select Sub-type...</option>
                 </select>
             </div>
+
             <div class="form-group">
                 <label>Colour Selection</label>
                 <div class="color-picker-container">
@@ -73,6 +77,7 @@
                     <span id="colorHexDisplay">#2563EB</span>
                 </div>
             </div>
+
             <div class="modal-btns">
                 <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-add" id="saveBtn" onclick="saveItem()" disabled>Add to Stock</button>
@@ -83,7 +88,7 @@
     <script>
         const catalog = {
             "Anker": { "PLA": ["Standard", "High-Speed"], "PETG": ["Standard"] },
-            "Anycubic": { "PLA": ["Standard", "Matte", "Silk"], "ABS": ["Standard"], "Resin": ["Standard", "Eco"] },
+            "Anycubic": { "PLA": ["Standard", "Matte", "Silk"], "ABS": ["Standard"] },
             "Bambu Labs": {
                 "PLA": ["Basic", "Matte", "Silk", "Marble", "Sparkle", "CF"],
                 "PETG": ["Basic", "CF", "HF"],
@@ -92,11 +97,11 @@
                 "Fibre Reinforced": ["PAHT-CF", "PET-CF", "PLA-CF"],
                 "PC": ["Basic"], "PA": ["Basic"], "PET": ["Basic"], "PPS": ["CF"]
             },
-            "Creality": { "PLA": ["Ender", "Hyper", "Silk", "CR"], "PETG": ["CR-PETG"], "ABS": ["CR-ABS"] },
+            "Creality": { "PLA": ["Ender", "Hyper", "Silk"], "PETG": ["CR-PETG"], "ABS": ["CR-ABS"] },
             "Elegoo": { "PLA": ["Standard", "Rapid"], "PETG": ["Standard"], "ABS": ["Standard"] },
             "Geeetech": { "PLA": ["Standard", "Silk", "Matte"], "PETG": ["Standard"] },
-            "Prusa": { "PLA": ["Prusament", "Recycled"], "PETG": ["Prusament", "V0"], "ASA": ["Prusament"], "PC": ["PC Blend"] },
-            "Qidi": { "PLA": ["Rapido"], "ABS": ["Rapido"], "PETG": ["Standard"] },
+            "Prusa": { "PLA": ["Prusament", "Recycled"], "PETG": ["Prusament", "V0"], "ASA": ["Prusament"] },
+            "Qidi": { "PLA": ["Rapido"], "ABS": ["Rapido"] },
             "Tronxy": { "PLA": ["Standard"], "PETG": ["Standard"] },
             "Vivedino": { "PLA": ["Standard"], "ABS": ["Standard"] },
             "Voron": { "ABS": ["Standard"], "ASA": ["Standard"] },
@@ -115,12 +120,49 @@
             });
         }
 
+        function updateTypeDropdown() {
+            const mfr = document.getElementById('mfrIn').value;
+            const typeSelect = document.getElementById('typeIn');
+            typeSelect.innerHTML = '<option value="">Select Type...</option>';
+            
+            if (mfr && catalog[mfr]) {
+                typeSelect.disabled = false;
+                Object.keys(catalog[mfr]).forEach(t => typeSelect.add(new Option(t, t)));
+            } else {
+                typeSelect.disabled = true;
+            }
+            updateSubtypeDropdown();
+        }
+
+        function updateSubtypeDropdown() {
+            const mfr = document.getElementById('mfrIn').value;
+            const type = document.getElementById('typeIn').value;
+            const subSelect = document.getElementById('subtypeIn');
+            subSelect.innerHTML = '<option value="">Select Sub-type...</option>';
+            
+            if (type && catalog[mfr][type]) {
+                subSelect.disabled = false;
+                catalog[mfr][type].forEach(s => subSelect.add(new Option(s, s)));
+            } else {
+                subSelect.disabled = true;
+            }
+            checkValidation();
+        }
+
+        function checkValidation() {
+            const mfr = document.getElementById('mfrIn').value;
+            const type = document.getElementById('typeIn').value;
+            const sub = document.getElementById('subtypeIn').value;
+            
+            // Enable button only if all three have values
+            document.getElementById('saveBtn').disabled = (mfr === "" || type === "" || sub === "");
+        }
+
         function renderItems() {
             const grid = document.getElementById('inventory-grid');
             const stockF = document.getElementById('stockFilter').value;
             const mfrF = document.getElementById('mfrFilter').value;
             const typeF = document.getElementById('typeFilter').value;
-            
             grid.innerHTML = '';
 
             const filteredList = inventory.filter(item => {
@@ -149,45 +191,13 @@
                         </div>
                         <div class="color-swatch" style="background-color: ${item.color};"></div>
                     </div>
-                    <div class="controls"><label>Qty:</label><input type="number" value="${item.qty}" min="0" onchange="updateQty(${realIdx}, this.value)"></div>
+                    <div class="controls">
+                        <label>Qty:</label>
+                        <input type="number" value="${item.qty}" min="0" onchange="updateQty(${realIdx}, this.value)">
+                    </div>
                 `;
                 grid.appendChild(card);
             });
-        }
-
-        // --- Helper Logic (Update Qty, Save, Modal, etc.) ---
-        function updateTypeDropdown() {
-            const mfr = document.getElementById('mfrIn').value;
-            const typeSelect = document.getElementById('typeIn');
-            typeSelect.innerHTML = '<option value="">Select Type...</option>';
-            if (mfr && catalog[mfr]) {
-                typeSelect.disabled = false;
-                Object.keys(catalog[mfr]).forEach(t => typeSelect.add(new Option(t, t)));
-            } else { typeSelect.disabled = true; }
-            updateSubtypeDropdown();
-        }
-
-        function updateSubtypeDropdown() {
-            const mfr = document.getElementById('mfrIn').value;
-            const type = document.getElementById('typeIn').value;
-            const subSelect = document.getElementById('subtypeIn');
-            subSelect.innerHTML = '<option value="">Select Sub-type...</option>';
-            if (type && catalog[mfr][type]) {
-                subSelect.disabled = false;
-                catalog[mfr][type].forEach(s => subSelect.add(new Option(s, s)));
-            } else { subSelect.disabled = true; }
-            checkValidation();
-        }
-
-        function checkValidation() {
-            const mfr = document.getElementById('mfrIn').value;
-            const type = document.getElementById('typeIn').value;
-            const sub = document.getElementById('subtypeIn').value;
-
-            // Log the values to the console for debugging
-            console.log("Validation Check:", { mfr, type, sub });
-            
-            document.getElementById('saveBtn').disabled = !(mfr && type && sub);
         }
 
         function saveItem() {
@@ -198,15 +208,38 @@
                 color: document.getElementById('colorIn').value,
                 qty: 1
             });
-            sync(); closeModal();
+            sync(); 
+            closeModal();
         }
 
-        function deleteItem(idx) { if(confirm("Delete this item?")) { inventory.splice(idx,1); sync(); } }
-        function updateQty(idx, val) { inventory[idx].qty = parseInt(val) || 0; sync(); }
-        function sync() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); renderItems(); }
+        function deleteItem(idx) { 
+            if(confirm("Delete this item from inventory?")) { 
+                inventory.splice(idx,1); 
+                sync(); 
+            } 
+        }
+
+        function updateQty(idx, val) { 
+            inventory[idx].qty = parseInt(val) || 0; 
+            sync(); 
+        }
+
+        function sync() { 
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); 
+            renderItems(); 
+        }
+
         function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-        document.getElementById('colorIn').addEventListener('input', (e) => document.getElementById('colorHexDisplay').innerText = e.target.value.toUpperCase());
+        
+        function closeModal() { 
+            document.getElementById('modal-overlay').style.display = 'none';
+            document.getElementById('mfrIn').value = "";
+            updateTypeDropdown();
+        }
+
+        document.getElementById('colorIn').addEventListener('input', (e) => {
+            document.getElementById('colorHexDisplay').innerText = e.target.value.toUpperCase();
+        });
 
         initDropdowns();
         renderItems();
