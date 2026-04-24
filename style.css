@@ -1,69 +1,46 @@
-body {
-    font-family: system-ui, -apple-system, sans-serif;
-    background-color: #f0f2f5;
-    padding: 20px;
+:root {
+    --primary: #2c3e50;
+    --danger: #e74c3c;
+    --success: #2ecc71;
 }
 
-header {
-    text-align: center;
-    margin-bottom: 30px;
+body { font-family: sans-serif; background: #f4f7f6; padding: 20px; }
+
+.hidden { display: none !important; }
+
+.top-bar { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+
+.card { 
+    background: white; border-radius: 8px; padding: 15px; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative;
 }
 
-.filters {
-    margin-top: 10px;
+#inventory-grid { 
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+    gap: 20px; max-width: 1000px; margin: 0 auto;
 }
 
-select {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+/* Delete Button */
+.delete-x {
+    position: absolute; top: 5px; right: 8px;
+    background: none; border: none; font-size: 1.5rem;
+    color: #ccc; cursor: pointer; transition: color 0.2s;
+}
+.delete-x:hover { color: var(--danger); }
+
+/* Form Styling */
+#form-container { max-width: 500px; margin: 0 auto 30px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+.color-inputs { display: flex; gap: 5px; grid-column: span 2; }
+.form-actions { margin-top: 15px; display: flex; gap: 10px; }
+
+/* Visuals */
+.swatch { height: 10px; border-radius: 5px; margin-bottom: 10px; }
+.oos { opacity: 0.5; border: 1px dashed #999; }
+
+input, select, button {
+    padding: 8px; border: 1px solid #ddd; border-radius: 4px;
 }
 
-#inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    max-width: 1000px;
-    margin: 0 auto;
-}
-
-.card {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: transform 0.2s;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.card.oos {
-    opacity: 0.6;
-    background-color: #f9f9f9;
-    border: 1px dashed #ccc;
-}
-
-.status-tag {
-    font-weight: bold;
-    font-size: 0.8rem;
-    margin-bottom: 15px;
-}
-
-.card:not(.oos) .status-tag { color: #2ecc71; }
-.card.oos .status-tag { color: #e74c3c; }
-
-.controls {
-    margin-top: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-input[type="number"] {
-    width: 60px;
-    padding: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
+.add-btn { background: var(--primary); color: white; cursor: pointer; }
+button[type="submit"] { background: var(--success); color: white; flex: 1; }
