@@ -1,31 +1,225 @@
-<form id="addItemForm">
-  <div class="form-group">
-    <label for="manufacturer">Manufacturer</label>
-    <select name="manufacturer" id="manufacturer" required>
-      <option value="">--Select Manufacturer--</option>
-      <option value="anker">Anker</option>
-      <option value="anycubic">Anycubic</option>
-      <option value="bambu">Bambu Labs</option>
-      <option value="creality">Creality</option>
-      <option value="elegoo">Elegoo</option>
-      <option value="geeetech">Geeetech</option>
-      <option value="prusa">Prusa</option>
-      <option value="qidi">Qidi</option>
-      <option value="tronxy">Tronxy</option>
-      <option value="vivedino">Vivedino</option>
-      <option value="voron">Voron</option>
-      <option value="voxelab">Voxelab</option>
-    </select>
-  </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #f8fafc;
+            --card: #ffffff;
+        }
 
-  <div class="form-group">
-    <label for="filamentColor">Filament Color</label>
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <input type="color" id="filamentColor" name="filamentColor" value="#2563eb" style="width: 50px; height: 50px; border: none; cursor: pointer;">
-      <input type="text" id="colorHex" value="#2563eb" pattern="^#+([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$" style="width: 100px; text-transform: uppercase;">
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for floating button */
+        }
+
+        header {
+            max-width: 1000px;
+            margin: 0 auto 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Inventory Grid */
+        #inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border-left: 5px solid #22c55e; /* Default Green */
+            transition: transform 0.1s;
+        }
+
+        .card.oos {
+            border-left-color: #ef4444; /* Red for Out of Stock */
+        }
+
+        .card h3 { margin: 0 0 10px 0; color: #1e293b; }
+        .card p { margin: 5px 0; color: #64748b; font-size: 0.9rem; }
+
+        .controls {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        /* Floating Button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Modal Styling */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-save { background: var(--primary); color: white; }
+        .btn-cancel { background: #e2e8f0; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Inventory Dashboard</h1>
+        <select id="stockFilter" onchange="renderItems()" style="padding: 10px; border-radius: 8px;">
+            <option value="all">All Items</option>
+            <option value="in">In Stock</option>
+            <option value="out">Out of Stock</option>
+        </select>
+    </header>
+
+    <main id="inventory-grid"></main>
+
+    <button class="fab" onclick="toggleModal(true)">+</button>
+
+    <div id="modal">
+        <div class="modal-content">
+            <h3>Add New Item</h3>
+            <input type="text" id="newMfr" placeholder="Manufacturer (e.g. Apple)">
+            <input type="text" id="newType" placeholder="Type (e.g. Phone)">
+            <input type="text" id="newColor" placeholder="Colour">
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="toggleModal(false)">Cancel</button>
+                <button class="btn btn-save" onclick="addItem()">Add Item</button>
+            </div>
+        </div>
     </div>
-    <small>Click the box for the wheel/slider or type a Hex code.</small>
-  </div>
 
-  <button type="submit" class="submit-btn">Add to Stock</button>
-</form>
+    <script>
+        let products = JSON.parse(localStorage.getItem('myAdvancedInventory')) || [];
+
+        function renderItems() {
+            const grid = document.getElementById('inventory-grid');
+            const filter = document.getElementById('stockFilter').value;
+            grid.innerHTML = '';
+
+            products.forEach((product, index) => {
+                const status = product.qty > 0 ? 'in' : 'out';
+                
+                // Filter Logic
+                if (filter !== 'all' && status !== filter) return;
+
+                const card = document.createElement('div');
+                card.className = `card ${status === 'out' ? 'oos' : ''}`;
+                card.innerHTML = `
+                    <h3>${product.mfr} ${product.type}</h3>
+                    <p><strong>Colour:</strong> ${product.color}</p>
+                    <p><strong>Status:</strong> ${status === 'in' ? 'Available' : 'Sold Out'}</p>
+                    <div class="controls">
+                        <label>Quantity: </label>
+                        <input type="number" value="${product.qty}" onchange="updateQty(${index}, this.value)">
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function updateQty(index, val) {
+            products[index].qty = parseInt(val) || 0;
+            saveAndRefresh();
+        }
+
+        function addItem() {
+            const mfr = document.getElementById('newMfr').value;
+            const type = document.getElementById('newType').value;
+            const color = document.getElementById('newColor').value;
+
+            if(!mfr || !type) return alert("Please fill in the details");
+
+            products.push({ mfr, type, color, qty: 1 });
+            saveAndRefresh();
+            toggleModal(false);
+            
+            // Clear inputs
+            document.getElementById('newMfr').value = '';
+            document.getElementById('newType').value = '';
+            document.getElementById('newColor').value = '';
+        }
+
+        function toggleModal(show) {
+            document.getElementById('modal').style.display = show ? 'flex' : 'none';
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('myAdvancedInventory', JSON.stringify(products));
+            renderItems();
+        }
+
+        // Run on load
+        renderItems();
+    </script>
+</body>
+</html>
