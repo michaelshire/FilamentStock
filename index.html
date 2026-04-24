@@ -3,222 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventory Manager</title>
-    <style>
-        :root {
-            --primary: #6366f1;
-            --bg: #f8fafc;
-            --card: #ffffff;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            padding: 20px;
-            padding-bottom: 100px; /* Space for floating button */
-        }
-
-        header {
-            max-width: 1000px;
-            margin: 0 auto 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Inventory Grid */
-        #inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            border-left: 5px solid #22c55e; /* Default Green */
-            transition: transform 0.1s;
-        }
-
-        .card.oos {
-            border-left-color: #ef4444; /* Red for Out of Stock */
-        }
-
-        .card h3 { margin: 0 0 10px 0; color: #1e293b; }
-        .card p { margin: 5px 0; color: #64748b; font-size: 0.9rem; }
-
-        .controls {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #f1f5f9;
-        }
-
-        input[type="number"] {
-            width: 80px;
-            padding: 8px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-        }
-
-        /* Floating Button */
-        .fab {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            border: none;
-            font-size: 30px;
-            cursor: pointer;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Modal Styling */
-        #modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 400px;
-        }
-
-        .modal-content input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .btn-save { background: var(--primary); color: white; }
-        .btn-cancel { background: #e2e8f0; }
-    </style>
+    <title>FilamentStock Manager</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <h1>Inventory Dashboard</h1>
-        <select id="stockFilter" onchange="renderItems()" style="padding: 10px; border-radius: 8px;">
-            <option value="all">All Items</option>
-            <option value="in">In Stock</option>
-            <option value="out">Out of Stock</option>
-        </select>
+        <h1>Filament Inventory</h1>
+        <div class="top-bar">
+            <select id="stockFilter" onchange="renderItems()">
+                <option value="all">Show All</option>
+                <option value="in">In Stock</option>
+                <option value="out">Out of Stock</option>
+            </select>
+            <button onclick="toggleForm()" class="add-btn">+ Add Filament</button>
+        </div>
     </header>
+
+    <div id="form-container" class="hidden">
+        <form id="itemForm" class="card">
+            <h3>Add New Filament</h3>
+            <div class="form-grid">
+                <select id="brand" required>
+                    <option value="" disabled selected>Manufacturer</option>
+                    <option>BambuLabs</option>
+                    <option>Elegoo</option>
+                    <option>Creality</option>
+                    <option>Anker</option>
+                    <option>Anycubic</option>
+                </select>
+                
+                <select id="type" required>
+                    <option value="" disabled selected>Material Type</option>
+                    <option>ABS</option>
+                    <option>PLA</option>
+                    <option>PLA Matte</option>
+                    <option>PET-G</option>
+                    <option>PET-G Transparent</option>
+                </select>
+
+                <div class="color-inputs">
+                    <input type="color" id="colorPicker" value="#3498db">
+                    <input type="text" id="hexInput" placeholder="#Hex Code" maxlength="7">
+                </div>
+
+                <input type="number" id="qty" placeholder="Quantity" min="0" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit">Save Item</button>
+                <button type="button" onclick="toggleForm()" class="cancel-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
 
     <main id="inventory-grid"></main>
 
-    <button class="fab" onclick="toggleModal(true)">+</button>
-
-    <div id="modal">
-        <div class="modal-content">
-            <h3>Add New Item</h3>
-            <input type="text" id="newMfr" placeholder="Manufacturer (e.g. Apple)">
-            <input type="text" id="newType" placeholder="Type (e.g. Phone)">
-            <input type="text" id="newColor" placeholder="Colour">
-            <div class="modal-actions">
-                <button class="btn btn-cancel" onclick="toggleModal(false)">Cancel</button>
-                <button class="btn btn-save" onclick="addItem()">Add Item</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        let products = JSON.parse(localStorage.getItem('myAdvancedInventory')) || [];
+        let products = JSON.parse(localStorage.getItem('myInventory')) || [];
+
+        // Handle Color Sync
+        const cp = document.getElementById('colorPicker');
+        const hex = document.getElementById('hexInput');
+        cp.oninput = () => hex.value = cp.value.toUpperCase();
+        hex.oninput = () => { if(/^#[0-9A-F]{6}$/i.test(hex.value)) cp.value = hex.value; };
+
+        function toggleForm() {
+            document.getElementById('form-container').classList.toggle('hidden');
+        }
+
+        document.getElementById('itemForm').onsubmit = (e) => {
+            e.preventDefault();
+            const newItem = {
+                id: Date.now(),
+                brand: document.getElementById('brand').value,
+                type: document.getElementById('type').value,
+                color: cp.value,
+                stock: parseInt(document.getElementById('qty').value),
+                status: parseInt(document.getElementById('qty').value) > 0 ? 'in' : 'out'
+            };
+            products.push(newItem);
+            saveAndRender();
+            e.target.reset();
+            toggleForm();
+        };
+
+        function deleteItem(id) {
+            if (confirm("Are you sure you want to delete this filament?")) {
+                products = products.filter(p => p.id !== id);
+                saveAndRender();
+            }
+        }
+
+        function updateQty(id, val) {
+            const p = products.find(p => p.id === id);
+            p.stock = parseInt(val);
+            p.status = p.stock > 0 ? 'in' : 'out';
+            saveAndRender();
+        }
+
+        function saveAndRender() {
+            localStorage.setItem('myInventory', JSON.stringify(products));
+            renderItems();
+        }
 
         function renderItems() {
             const grid = document.getElementById('inventory-grid');
             const filter = document.getElementById('stockFilter').value;
             grid.innerHTML = '';
 
-            products.forEach((product, index) => {
-                const status = product.qty > 0 ? 'in' : 'out';
-                
-                // Filter Logic
-                if (filter !== 'all' && status !== filter) return;
+            products.forEach(p => {
+                if (filter !== 'all' && p.status !== filter) return;
 
                 const card = document.createElement('div');
-                card.className = `card ${status === 'out' ? 'oos' : ''}`;
+                card.className = `card ${p.status === 'out' ? 'oos' : ''}`;
                 card.innerHTML = `
-                    <h3>${product.mfr} ${product.type}</h3>
-                    <p><strong>Colour:</strong> ${product.color}</p>
-                    <p><strong>Status:</strong> ${status === 'in' ? 'Available' : 'Sold Out'}</p>
+                    <button class="delete-x" onclick="deleteItem(${p.id})">&times;</button>
+                    <div class="swatch" style="background:${p.color}"></div>
+                    <h3>${p.brand}</h3>
+                    <p>${p.type}</p>
                     <div class="controls">
-                        <label>Quantity: </label>
-                        <input type="number" value="${product.qty}" onchange="updateQty(${index}, this.value)">
+                        <input type="number" value="${p.stock}" onchange="updateQty(${p.id}, this.value)">
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        function updateQty(index, val) {
-            products[index].qty = parseInt(val) || 0;
-            saveAndRefresh();
-        }
-
-        function addItem() {
-            const mfr = document.getElementById('newMfr').value;
-            const type = document.getElementById('newType').value;
-            const color = document.getElementById('newColor').value;
-
-            if(!mfr || !type) return alert("Please fill in the details");
-
-            products.push({ mfr, type, color, qty: 1 });
-            saveAndRefresh();
-            toggleModal(false);
-            
-            // Clear inputs
-            document.getElementById('newMfr').value = '';
-            document.getElementById('newType').value = '';
-            document.getElementById('newColor').value = '';
-        }
-
-        function toggleModal(show) {
-            document.getElementById('modal').style.display = show ? 'flex' : 'none';
-        }
-
-        function saveAndRefresh() {
-            localStorage.setItem('myAdvancedInventory', JSON.stringify(products));
-            renderItems();
-        }
-
-        // Run on load
         renderItems();
     </script>
 </body>
