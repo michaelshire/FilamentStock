@@ -1,81 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browser-Side Inventory</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<form id="addItemForm">
+  <div class="form-group">
+    <label for="manufacturer">Manufacturer</label>
+    <select name="manufacturer" id="manufacturer" required>
+      <option value="">--Select Manufacturer--</option>
+      <option value="anker">Anker</option>
+      <option value="anycubic">Anycubic</option>
+      <option value="bambu">Bambu Labs</option>
+      <option value="creality">Creality</option>
+      <option value="elegoo">Elegoo</option>
+      <option value="geeetech">Geeetech</option>
+      <option value="prusa">Prusa</option>
+      <option value="qidi">Qidi</option>
+      <option value="tronxy">Tronxy</option>
+      <option value="vivedino">Vivedino</option>
+      <option value="voron">Voron</option>
+      <option value="voxelab">Voxelab</option>
+    </select>
+  </div>
 
-    <header>
-        <h1>Local Filament Manager</h1>
-        <div class="filters">
-            <label>Filter View: </label>
-            <select id="stockFilter" onchange="renderItems()">
-                <option value="all">Show All</option>
-                <option value="in">In Stock Only</option>
-                <option value="out">Out of Stock</option>
-            </select>
-        </div>
-    </header>
+  <div class="form-group">
+    <label for="filamentColor">Filament Color</label>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <input type="color" id="filamentColor" name="filamentColor" value="#2563eb" style="width: 50px; height: 50px; border: none; cursor: pointer;">
+      <input type="text" id="colorHex" value="#2563eb" pattern="^#+([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$" style="width: 100px; text-transform: uppercase;">
+    </div>
+    <small>Click the box for the wheel/slider or type a Hex code.</small>
+  </div>
 
-    <main id="inventory-grid">
-        </main>
-
-    <script>
-        // Initial Data - Stored in Browser after first load
-        const initialProducts = [
-            { id: 1, name: "Mechanical Keyboard", status: "in", price: 89, stock: 15 },
-            { id: 2, name: "Wireless Mouse", status: "in", price: 45, stock: 10 },
-            { id: 3, name: "USB-C Cable", status: "out", price: 15, stock: 0 },
-            { id: 4, name: "Gaming Monitor", status: "in", price: 299, stock: 5 },
-            { id: 5, name: "Webcam", status: "out", price: 60, stock: 0 }
-        ];
-
-        // Load data from localStorage or use initial data
-        let products = JSON.parse(localStorage.getItem('myInventory')) || initialProducts;
-
-        function renderItems() {
-            const grid = document.getElementById('inventory-grid');
-            const filter = document.getElementById('stockFilter').value;
-            grid.innerHTML = '';
-
-            products.forEach((product, index) => {
-                // Filter Logic
-                if (filter !== 'all' && product.status !== filter) return;
-
-                const card = document.createElement('div');
-                card.className = `card ${product.status === 'out' ? 'oos' : ''}`;
-                
-                card.innerHTML = `
-                    <h3>${product.name}</h3>
-                    <p class="status-tag">${product.status === 'in' ? '● In Stock' : '○ Out of Stock'}</p>
-                    <p>Price: $${product.price}</p>
-                    <div class="controls">
-                        <label>Qty:</label>
-                        <input type="number" 
-                               value="${product.stock}" 
-                               min="0" 
-                               onchange="updateQuantity(${index}, this.value)">
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function updateQuantity(index, newVal) {
-            products[index].stock = parseInt(newVal);
-            // Logic: If user sets qty to 0, mark as out of stock
-            products[index].status = products[index].stock > 0 ? 'in' : 'out';
-            
-            // Save to browser storage
-            localStorage.setItem('myInventory', JSON.stringify(products));
-            renderItems(); // Refresh view
-        }
-
-        // Initial Load
-        renderItems();
-    </script>
-</body>
-</html>
+  <button type="submit" class="submit-btn">Add to Stock</button>
+</form>
