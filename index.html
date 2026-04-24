@@ -175,15 +175,36 @@
             <h2>New Product</h2>
             <div class="form-group">
                 <label>Manufacturer</label>
-                <input type="text" id="mfrIn" placeholder="e.g. Sony">
+                <select id="mfrIn">
+                    <option value="Anker">Anker</option>
+                    <option value="Anycubic">Anycubic</option>
+                    <option value="Bambu Labs">Bambu Labs</option>
+                    <option value="Creality">Creality</option>
+                    <option value="Elegoo">Elegoo</option>
+                    <option value="Geeetech">Geeetech</option>
+                    <option value="Prusa">Prusa</option>
+                    <option value="Qidi">Qidi</option>
+                    <option value="Tronxy">Tronxy</option>
+                    <option value="Vivedino">Vivedino</option>
+                    <option value="Voron">Voron</option>
+                    <option value="Voxelab">Voxelab</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Type</label>
-                <input type="text" id="typeIn" placeholder="e.g. Headphones">
+                <select id="typeIn">
+                    <option value="ABS">ABS</option>
+                    <option value="PLA">PLA</option>
+                    <option value="PETG">PETG</option>
+                    <option value="PETG-Translucent">PETG-Translucent</option>
+                </select>
             </div>
             <div class="form-group">
-                <label>Colour</label>
-                <input type="text" id="colorIn" placeholder="e.g. Midnight Blue">
+                <label>Colour Selection</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="color" id="colorIn" value="#2563eb" style="width: 50px; height: 50px; padding: 0; border: none;">
+                    <span id="colorHexText" style="font-family: monospace; color: #64748b;">#2563eb</span>
+                </div>
             </div>
             <div class="modal-btns">
                 <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
