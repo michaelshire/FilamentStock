@@ -9,13 +9,35 @@
 <body>
 
     <header>
-        <div class="header-content">
-            <h1>Filament Stock</h1>
-            <select id="stockFilter" onchange="renderItems()">
-                <option value="all">All Items</option>
-                <option value="in">In Stock</option>
-                <option value="out">Out of Stock</option>
-            </select>
+        <h1>Filament Stock</h1>
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Availability</label>
+                <select id="stockFilter" onchange="renderItems()">
+                    <option value="all">All Items</option>
+                    <option value="in">In Stock</option>
+                    <option value="out">Out of Stock</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Manufacturer</label>
+                <select id="mfrFilter" onchange="renderItems()">
+                    <option value="all">All Brands</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Material Type</label>
+                <select id="typeFilter" onchange="renderItems()">
+                    <option value="all">All Materials</option>
+                    <option value="PLA">PLA</option>
+                    <option value="PETG">PETG</option>
+                    <option value="ABS">ABS</option>
+                    <option value="ASA">ASA</option>
+                    <option value="TPU">TPU</option>
+                    <option value="Support">Support</option>
+                    <option value="Fibre Reinforced">Fibre Reinforced</option>
+                </select>
+            </div>
         </div>
     </header>
 
@@ -26,28 +48,24 @@
     <div id="modal-overlay">
         <div class="modal">
             <h2>Add New Filament</h2>
-            
             <div class="form-group">
                 <label>Manufacturer</label>
                 <select id="mfrIn" onchange="updateTypeDropdown()">
                     <option value="">Select Brand...</option>
                 </select>
             </div>
-
             <div class="form-group">
                 <label>Type</label>
                 <select id="typeIn" onchange="updateSubtypeDropdown()" disabled>
                     <option value="">Select Type...</option>
                 </select>
             </div>
-
             <div class="form-group">
                 <label>Sub-Type</label>
                 <select id="subtypeIn" disabled>
                     <option value="">Select Sub-type...</option>
                 </select>
             </div>
-
             <div class="form-group">
                 <label>Colour Selection</label>
                 <div class="color-picker-container">
@@ -55,7 +73,6 @@
                     <span id="colorHexDisplay">#2563EB</span>
                 </div>
             </div>
-
             <div class="modal-btns">
                 <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-add" id="saveBtn" onclick="saveItem()" disabled>Add to Stock</button>
@@ -64,77 +81,101 @@
     </div>
 
     <script>
-        // DATA STRUCTURE: The "Source of Truth" for your brands
         const catalog = {
+            "Anker": { "PLA": ["Standard", "High-Speed"], "PETG": ["Standard"] },
+            "Anycubic": { "PLA": ["Standard", "Matte", "Silk"], "ABS": ["Standard"], "Resin": ["Standard", "Eco"] },
             "Bambu Labs": {
-                "PLA": ["Basic", "Matte", "Silk", "Marble", "Sparkle", "CF (Carbon Fiber)"],
-                "PETG": ["Basic", "CF", "HF (High Flow)"],
-                "ABS": ["Basic"],
-                "ASA": ["Basic"],
-                "TPU": ["95A", "HF"],
-                "Support": ["Support for PLA", "Support for PA/PET", "Support G"],
-                "Fibre Reinforced": ["PAHT-CF", "PET-CF", "PLA-CF"]
+                "PLA": ["Basic", "Matte", "Silk", "Marble", "Sparkle", "CF"],
+                "PETG": ["Basic", "CF", "HF"],
+                "ABS": ["Basic"], "ASA": ["Basic"], "TPU": ["95A", "HF"],
+                "Support": ["for PLA", "for PA/PET", "Support G"],
+                "Fibre Reinforced": ["PAHT-CF", "PET-CF", "PLA-CF"],
+                "PC": ["Basic"], "PA": ["Basic"], "PET": ["Basic"], "PPS": ["CF"]
             },
-            "Prusa": {
-                "PLA": ["Prusament PLA", "Recycled"],
-                "PETG": ["Prusament PETG", "V0 (Self-extinguishing)"],
-                "ASA": ["Prusament ASA"]
-            },
-            "Creality": {
-                "PLA": ["Ender Series", "Hyper PLA", "Silk"],
-                "PETG": ["CR-PETG"]
-            }
-            // You can easily add more brands here following the same pattern
+            "Creality": { "PLA": ["Ender", "Hyper", "Silk", "CR"], "PETG": ["CR-PETG"], "ABS": ["CR-ABS"] },
+            "Elegoo": { "PLA": ["Standard", "Rapid"], "PETG": ["Standard"], "ABS": ["Standard"] },
+            "Geeetech": { "PLA": ["Standard", "Silk", "Matte"], "PETG": ["Standard"] },
+            "Prusa": { "PLA": ["Prusament", "Recycled"], "PETG": ["Prusament", "V0"], "ASA": ["Prusament"], "PC": ["PC Blend"] },
+            "Qidi": { "PLA": ["Rapido"], "ABS": ["Rapido"], "PETG": ["Standard"] },
+            "Tronxy": { "PLA": ["Standard"], "PETG": ["Standard"] },
+            "Vivedino": { "PLA": ["Standard"], "ABS": ["Standard"] },
+            "Voron": { "ABS": ["Standard"], "ASA": ["Standard"] },
+            "Voxelab": { "PLA": ["Standard"], "PETG": ["Standard"] }
         };
 
         const STORAGE_KEY = 'filament_inventory_v3';
         let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-        // --- Dropdown Logic ---
-
-        function initMfrDropdown() {
-            const mfrSelect = document.getElementById('mfrIn');
-            Object.keys(catalog).forEach(brand => {
-                const opt = new Option(brand, brand);
-                mfrSelect.add(opt);
+        function initDropdowns() {
+            const mfrIn = document.getElementById('mfrIn');
+            const mfrFilter = document.getElementById('mfrFilter');
+            Object.keys(catalog).sort().forEach(brand => {
+                mfrIn.add(new Option(brand, brand));
+                mfrFilter.add(new Option(brand, brand));
             });
         }
 
+        function renderItems() {
+            const grid = document.getElementById('inventory-grid');
+            const stockF = document.getElementById('stockFilter').value;
+            const mfrF = document.getElementById('mfrFilter').value;
+            const typeF = document.getElementById('typeFilter').value;
+            
+            grid.innerHTML = '';
+
+            const filteredList = inventory.filter(item => {
+                const matchStock = stockF === 'all' || (stockF === 'in' ? item.qty > 0 : item.qty === 0);
+                const matchMfr = mfrF === 'all' || item.mfr === mfrF;
+                const matchType = typeF === 'all' || item.type === typeF;
+                return matchStock && matchMfr && matchType;
+            });
+
+            if (filteredList.length === 0) {
+                grid.innerHTML = '<div class="empty-state">No matching filament found.</div>';
+                return;
+            }
+
+            filteredList.forEach((item) => {
+                const realIdx = inventory.indexOf(item);
+                const card = document.createElement('div');
+                card.className = `card ${item.qty === 0 ? 'oos' : ''}`;
+                card.innerHTML = `
+                    <button class="delete-btn" onclick="deleteItem(${realIdx})">&times;</button>
+                    <div class="card-header">
+                        <div class="card-title-area">
+                            <h3>${item.mfr}</h3>
+                            <p class="type-tag">${item.type} (${item.subtype})</p>
+                            <span class="hex-badge">${item.color.toUpperCase()}</span>
+                        </div>
+                        <div class="color-swatch" style="background-color: ${item.color};"></div>
+                    </div>
+                    <div class="controls"><label>Qty:</label><input type="number" value="${item.qty}" min="0" onchange="updateQty(${realIdx}, this.value)"></div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- Helper Logic (Update Qty, Save, Modal, etc.) ---
         function updateTypeDropdown() {
             const mfr = document.getElementById('mfrIn').value;
             const typeSelect = document.getElementById('typeIn');
-            const subtypeSelect = document.getElementById('subtypeIn');
-            
             typeSelect.innerHTML = '<option value="">Select Type...</option>';
-            subtypeSelect.innerHTML = '<option value="">Select Sub-type...</option>';
-            subtypeSelect.disabled = true;
-
             if (mfr && catalog[mfr]) {
                 typeSelect.disabled = false;
-                Object.keys(catalog[mfr]).forEach(type => {
-                    typeSelect.add(new Option(type, type));
-                });
-            } else {
-                typeSelect.disabled = true;
-            }
-            checkValidation();
+                Object.keys(catalog[mfr]).forEach(t => typeSelect.add(new Option(t, t)));
+            } else { typeSelect.disabled = true; }
+            updateSubtypeDropdown();
         }
 
         function updateSubtypeDropdown() {
             const mfr = document.getElementById('mfrIn').value;
             const type = document.getElementById('typeIn').value;
-            const subtypeSelect = document.getElementById('subtypeIn');
-
-            subtypeSelect.innerHTML = '<option value="">Select Sub-type...</option>';
-
+            const subSelect = document.getElementById('subtypeIn');
+            subSelect.innerHTML = '<option value="">Select Sub-type...</option>';
             if (type && catalog[mfr][type]) {
-                subtypeSelect.disabled = false;
-                catalog[mfr][type].forEach(sub => {
-                    subtypeSelect.add(new Option(sub, sub));
-                });
-            } else {
-                subtypeSelect.disabled = true;
-            }
+                subSelect.disabled = false;
+                catalog[mfr][type].forEach(s => subSelect.add(new Option(s, s)));
+            } else { subSelect.disabled = true; }
             checkValidation();
         }
 
@@ -145,87 +186,25 @@
             document.getElementById('saveBtn').disabled = !(mfr && type && sub);
         }
 
-        document.getElementById('subtypeIn').addEventListener('change', checkValidation);
-
-        // --- Core Functionality ---
-
-        function renderItems() {
-            const grid = document.getElementById('inventory-grid');
-            const filter = document.getElementById('stockFilter').value;
-            grid.innerHTML = '';
-
-            const filteredList = inventory.filter(item => {
-                if (filter === 'in') return item.qty > 0;
-                if (filter === 'out') return item.qty === 0;
-                return true;
-            });
-
-            if (filteredList.length === 0) {
-                grid.innerHTML = '<div class="empty-state">No filaments found. Click + to add some!</div>';
-                return;
-            }
-
-            filteredList.forEach((item) => {
-                const realIdx = inventory.indexOf(item);
-                const card = document.createElement('div');
-                card.className = `card ${item.qty === 0 ? 'oos' : ''}`;
-                
-                card.innerHTML = `
-                    <button class="delete-btn" onclick="deleteItem(${realIdx})">&times;</button>
-                    <div class="card-header">
-                        <div class="card-title-area">
-                            <h3>${item.mfr}</h3>
-                            <p class="type-tag">${item.type} - ${item.subtype}</p>
-                            <span class="hex-badge">${item.color.toUpperCase()}</span>
-                        </div>
-                        <div class="color-swatch" style="background-color: ${item.color};"></div>
-                    </div>
-                    <div class="controls">
-                        <label>Qty:</label>
-                        <input type="number" value="${item.qty}" min="0" onchange="updateQty(${realIdx}, this.value)">
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
         function saveItem() {
-            const mfr = document.getElementById('mfrIn').value;
-            const type = document.getElementById('typeIn').value;
-            const subtype = document.getElementById('subtypeIn').value;
-            const color = document.getElementById('colorIn').value;
-
-            inventory.push({ mfr, type, subtype, color, qty: 1 });
-            sync();
-            closeModal();
+            inventory.push({
+                mfr: document.getElementById('mfrIn').value,
+                type: document.getElementById('typeIn').value,
+                subtype: document.getElementById('subtypeIn').value,
+                color: document.getElementById('colorIn').value,
+                qty: 1
+            });
+            sync(); closeModal();
         }
 
-        function deleteItem(idx) {
-            if (confirm("Remove this filament?")) {
-                inventory.splice(idx, 1);
-                sync();
-            }
-        }
-
-        function updateQty(idx, val) {
-            inventory[idx].qty = parseInt(val) || 0;
-            sync();
-        }
-
-        function sync() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-            renderItems();
-        }
-
+        function deleteItem(idx) { if(confirm("Delete this item?")) { inventory.splice(idx,1); sync(); } }
+        function updateQty(idx, val) { inventory[idx].qty = parseInt(val) || 0; sync(); }
+        function sync() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); renderItems(); }
         function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
         function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        document.getElementById('colorIn').addEventListener('input', (e) => document.getElementById('colorHexDisplay').innerText = e.target.value.toUpperCase());
 
-        // Live Color Sync
-        document.getElementById('colorIn').addEventListener('input', (e) => {
-            document.getElementById('colorHexDisplay').innerText = e.target.value.toUpperCase();
-        });
-
-        initMfrDropdown();
+        initDropdowns();
         renderItems();
     </script>
 </body>
