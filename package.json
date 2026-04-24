@@ -1,1 +1,6 @@
-"scripts": { "build": "echo 'No build needed'" }
+{
+  "scripts": {
+    "build": "echo 'No build needed'",
+    "build:azure": "echo 'No build needed'"
+  }
+}
