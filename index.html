@@ -72,7 +72,9 @@
     </div>
 
     <script>
-        let inventory = JSON.parse(localStorage.getItem('filament_inventory_v1')) || [];
+        // Use a unique key for storage to avoid conflicts
+        const STORAGE_KEY = 'filament_inventory_v2';
+        let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
         // Update hex text in modal live
         document.getElementById('colorIn').addEventListener('input', (e) => {
@@ -101,6 +103,8 @@
                 card.className = `card ${item.qty === 0 ? 'oos' : ''}`;
                 
                 card.innerHTML = `
+                    <button class="delete-btn" onclick="deleteItem(${realIdx})" title="Remove Item">&times;</button>
+                    
                     <div class="card-header">
                         <div class="card-title-area">
                             <h3>${item.mfr}</h3>
@@ -109,8 +113,9 @@
                         </div>
                         <div class="color-swatch" style="background-color: ${item.color};"></div>
                     </div>
+                    
                     <div class="controls">
-                        <label>Quantity:</label>
+                        <label>Inventory Qty:</label>
                         <input type="number" value="${item.qty}" min="0" onchange="updateQty(${realIdx}, this.value)">
                     </div>
                 `;
@@ -128,8 +133,13 @@
             closeModal();
         }
 
-        function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        function deleteItem(idx) {
+            const item = inventory[idx];
+            if (confirm(`Remove ${item.mfr} ${item.type} (${item.color}) from your inventory?`)) {
+                inventory.splice(idx, 1);
+                sync();
+            }
+        }
 
         function updateQty(idx, val) {
             inventory[idx].qty = parseInt(val) || 0;
@@ -137,11 +147,14 @@
         }
 
         function sync() {
-            localStorage.setItem('filament_inventory_v1', JSON.stringify(inventory));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
             renderItems();
         }
 
-        // Initialize
+        function openModal() { document.getElementById('modal-overlay').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+        // Initialize on page load
         renderItems();
     </script>
 </body>
